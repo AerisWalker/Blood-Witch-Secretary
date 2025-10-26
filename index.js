@@ -1,9 +1,9 @@
-// 🌙 Blood Moon Secretary — versión Render estable con TikTok Signature
+// 🌙 Blood Moon Secretary — versión Render estable y final
 import "./keepAlive.js";
 import { Client, GatewayIntentBits } from "discord.js";
 import Parser from "rss-parser";
 import fetch from "node-fetch";
-import TikTokSign from "tiktok-signature"; // ✅ Importación correcta (solo una vez)
+import TikTokSign from "tiktok-signature"; // ✅ Importación correcta
 import dotenv from "dotenv";
 import fs from "fs";
 dotenv.config();
@@ -66,7 +66,8 @@ async function checkYouTube() {
 async function checkTikTok() {
   try {
     const profileUrl = `https://www.tiktok.com/@${TIKTOK_USERNAME}`;
-    const signed = TikTokSign(profileUrl); // ✅ función directa
+    const signer = new TikTokSign(); // ✅ crear instancia de la clase
+    const signed = signer.sign(profileUrl); // ✅ método correcto
     const url = `${profileUrl}?${signed}`;
 
     const response = await fetch(url, {
