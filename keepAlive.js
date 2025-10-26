@@ -1,11 +1,12 @@
+// 💫 KeepAlive — mantiene vivo al bot en Render
 import express from "express";
+
 const app = express();
+const PORT = process.env.PORT || 10000;
 
-app.get("/", (req, res) => {
-  res.send("🌙 Blood Moon Secretary sigue vigilando desde las sombras.");
-});
+// Endpoint silencioso para el health check de Render
+app.get("/", (_, res) => res.status(200).send("✨ Blood Moon Secretary está despierta."));
 
-const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`💫 Keep-alive escuchando en el puerto ${PORT}`);
 });
