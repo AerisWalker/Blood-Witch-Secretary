@@ -1,9 +1,10 @@
-// 🌙 Blood Moon Secretary — versión Render estable
+// 🌙 Blood Moon Secretary — versión Render estable con memoria de último video
 import "./keepAlive.js"; // 🔁 Mantiene vivo el bot en Render
-import { Client, GatewayIntentBits, EmbedBuilder } from "discord.js";
+import { Client, GatewayIntentBits } from "discord.js";
 import Parser from "rss-parser";
 import fetch from "node-fetch";
 import dotenv from "dotenv";
+import fs from "fs";
 dotenv.config();
 
 // === ⚙️ Inicialización del cliente de Discord ===
@@ -23,7 +24,18 @@ const {
   CHANNEL_DISCORD_STREAM,
 } = process.env;
 
+// === 🩸 Memoria persistente del último video ===
 let lastYouTube = null;
+const lastFile = "./lastYouTube.txt";
+
+// Cargar último video guardado si existe
+if (fs.existsSync(lastFile)) {
+  lastYouTube = fs.readFileSync(lastFile, "utf-8").trim();
+  console.log(`📁 Último video recordado: ${lastYouTube}`);
+} else {
+  console.log("📁 No hay registro previo de video, iniciando desde cero.");
+}
+
 let lastTikTok = null;
 let isLive = false;
 
@@ -38,10 +50,13 @@ async function checkYouTube() {
     if (!feed.items?.length) return;
 
     const latest = feed.items[0];
+
+    // Si hay un nuevo video
     if (!lastYouTube || latest.link !== lastYouTube) {
       lastYouTube = latest.link;
-      const channel = await client.channels.fetch(CHANNEL_DISCORD_AVISOS);
+      fs.writeFileSync(lastFile, latest.link); // 🧠 Guarda el nuevo enlace
 
+      const channel = await client.channels.fetch(CHANNEL_DISCORD_AVISOS);
       const message = {
         content: `🌙 @everyone\nEl hechizo del día se ha grabado 📹\n✨ **${latest.title}** acaba de salir en el canal de **${feed.title}**\n🪞 Corre a verlo: ${latest.link}`,
       };
@@ -56,21 +71,21 @@ async function checkYouTube() {
   }
 }
 
-// === 🎵 TikTok ===
+// === 🎵 TikTok (modo reforzado con RSSHub) ===
 async function checkTikTok() {
   try {
-    const rssUrl = `https://www.tiktok.com/@${TIKTOK_USERNAME}/rss`;
+    // Usamos RSSHub para evitar bloqueos del feed original
+    const rssUrl = `https://rsshub.app/tiktok/user/${TIKTOK_USERNAME}`;
     const response = await fetch(rssUrl);
     const xml = await response.text();
 
+    // Extraer el primer enlace de video desde el XML
     const match = xml.match(
-      /<link>(https:\/\/www\.tiktok\.com\/@[^<]+)<\/link>/i
+      /<link>(https:\/\/www\.tiktok\.com\/@[^<]+\/video\/[^<]+)<\/link>/i
     );
 
     if (!match || !match[1]) {
-      console.log(
-        `⚠️ No se pudo extraer enlace del RSS de TikTok (${TIKTOK_USERNAME}).`
-      );
+      console.log(`⚠️ No se pudo extraer enlace del RSSHub de TikTok (${TIKTOK_USERNAME}).`);
       return;
     }
 
@@ -92,6 +107,7 @@ async function checkTikTok() {
     console.error("❌ Error al revisar TikTok:", err.message);
   }
 }
+
 
 // === 🟣 Twitch ===
 async function checkTwitch() {
@@ -149,10 +165,10 @@ client.once("ready", () => {
   checkTikTok();
   checkTwitch();
 
-  // Intervalos
-  setInterval(checkYouTube, 5 * 60 * 1000);
-  setInterval(checkTikTok, 10 * 60 * 1000);
-  setInterval(checkTwitch, 2 * 60 * 1000);
+  // Intervalos automáticos
+  setInterval(checkYouTube, 5 * 60 * 1000); // cada 5 min
+  setInterval(checkTikTok, 10 * 60 * 1000); // cada 10 min
+  setInterval(checkTwitch, 2 * 60 * 1000); // cada 2 min
 });
 
 client.login(DISCORD_TOKEN);
