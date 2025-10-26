@@ -3,11 +3,12 @@ import "./keepAlive.js";
 import { Client, GatewayIntentBits } from "discord.js";
 import Parser from "rss-parser";
 import fetch from "node-fetch";
-import TikTokSign from "tiktok-signature"; // ✅ Importación correcta
+import TikTokSign from "tiktok-signature"; // ✅ Importación correcta (solo una vez)
 import dotenv from "dotenv";
 import fs from "fs";
 dotenv.config();
 
+// === ⚙️ Configuración del cliente de Discord ===
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
 });
@@ -23,6 +24,7 @@ const {
   CHANNEL_DISCORD_STREAM,
 } = process.env;
 
+// === 📂 Memoria persistente del último video de YouTube ===
 let lastYouTube = null;
 const lastFile = "./lastYouTube.txt";
 if (fs.existsSync(lastFile)) {
@@ -60,9 +62,7 @@ async function checkYouTube() {
   }
 }
 
-// === 🎵 TikTok (con TikTok Signature FINAL) ===
-import TikTokSign from "tiktok-signature";
-
+// === 🎵 TikTok (con TikTok Signature) ===
 async function checkTikTok() {
   try {
     const profileUrl = `https://www.tiktok.com/@${TIKTOK_USERNAME}`;
@@ -100,7 +100,6 @@ async function checkTikTok() {
   }
 }
 
-
 // === 🟣 Twitch ===
 async function checkTwitch() {
   try {
@@ -136,17 +135,16 @@ async function checkTwitch() {
   }
 }
 
-// === LOOP PRINCIPAL ===
-client.once("ready", () => {
+// === 🌙 LOOP PRINCIPAL ===
+client.once("clientReady", () => {
   console.log(`✅ Blood Moon Secretary conectada como ${client.user.tag}`);
   checkYouTube();
   checkTikTok();
   checkTwitch();
 
-  setInterval(checkYouTube, 5 * 60 * 1000);
-  setInterval(checkTikTok, 10 * 60 * 1000);
-  setInterval(checkTwitch, 2 * 60 * 1000);
+  setInterval(checkYouTube, 5 * 60 * 1000); // 5 min
+  setInterval(checkTikTok, 10 * 60 * 1000); // 10 min
+  setInterval(checkTwitch, 2 * 60 * 1000);  // 2 min
 });
 
 client.login(DISCORD_TOKEN);
-
