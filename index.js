@@ -63,8 +63,6 @@ async function checkYouTube() {
 }
 
 // === 🎵 TikTok (scrape sin API ni premium, versión liviana) ===
-let lastTikTok = null;
-
 async function checkTikTok() {
   try {
     const url = `https://www.tiktok.com/@${TIKTOK_USERNAME}`;
@@ -152,5 +150,6 @@ client.once("clientReady", () => {
 });
 
 client.login(DISCORD_TOKEN);
+
 
 
