@@ -60,11 +60,13 @@ async function checkYouTube() {
   }
 }
 
-// === 🎵 TikTok (con TikTok Signature) ===
+// === 🎵 TikTok (con TikTok Signature FINAL) ===
+import TikTokSign from "tiktok-signature";
+
 async function checkTikTok() {
   try {
     const profileUrl = `https://www.tiktok.com/@${TIKTOK_USERNAME}`;
-    const signed = TikTokSign.sign(profileUrl); // ✅ usa la exportación por defecto
+    const signed = TikTokSign(profileUrl); // ✅ función directa
     const url = `${profileUrl}?${signed}`;
 
     const response = await fetch(url, {
@@ -97,6 +99,7 @@ async function checkTikTok() {
     console.error("❌ Error al revisar TikTok:", err.message);
   }
 }
+
 
 // === 🟣 Twitch ===
 async function checkTwitch() {
@@ -146,3 +149,4 @@ client.once("ready", () => {
 });
 
 client.login(DISCORD_TOKEN);
+
