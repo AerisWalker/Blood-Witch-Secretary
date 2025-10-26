@@ -1,0 +1,17 @@
+{
+  "name": "blood-moon-secretary",
+  "version": "1.0.0",
+  "description": "Bot de Discord que anuncia streams y videos con estilo místico y lunar.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.15.3",
+    "dotenv": "^17.2.3",
+    "rss-parser": "^3.13.0",
+    "node-fetch": "^3.3.2",
+    "express": "^4.19.2"
+  }
+}
