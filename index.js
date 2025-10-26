@@ -122,3 +122,5 @@ client.once("ready", () => {
 });
 
 client.login(DISCORD_TOKEN);
+
+import "./keepAlive.js";
