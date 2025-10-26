@@ -1,8 +1,9 @@
-// 🌙 Blood Moon Secretary — versión Render estable con memoria de último video
-import "./keepAlive.js"; // 🔁 Mantiene vivo el bot en Render
+// 🌙 Blood Moon Secretary — versión Render estable con TikTok Signature
+import "./keepAlive.js"; // Mantiene vivo el bot en Render
 import { Client, GatewayIntentBits } from "discord.js";
 import Parser from "rss-parser";
 import fetch from "node-fetch";
+import { sign } from "tiktok-signature";
 import dotenv from "dotenv";
 import fs from "fs";
 dotenv.config();
@@ -24,11 +25,10 @@ const {
   CHANNEL_DISCORD_STREAM,
 } = process.env;
 
-// === 🩸 Memoria persistente del último video ===
+// === 🩸 Memoria persistente del último video de YouTube ===
 let lastYouTube = null;
 const lastFile = "./lastYouTube.txt";
 
-// Cargar último video guardado si existe
 if (fs.existsSync(lastFile)) {
   lastYouTube = fs.readFileSync(lastFile, "utf-8").trim();
   console.log(`📁 Último video recordado: ${lastYouTube}`);
@@ -48,13 +48,11 @@ async function checkYouTube() {
     );
 
     if (!feed.items?.length) return;
-
     const latest = feed.items[0];
 
-    // Si hay un nuevo video
     if (!lastYouTube || latest.link !== lastYouTube) {
       lastYouTube = latest.link;
-      fs.writeFileSync(lastFile, latest.link); // 🧠 Guarda el nuevo enlace
+      fs.writeFileSync(lastFile, latest.link);
 
       const channel = await client.channels.fetch(CHANNEL_DISCORD_AVISOS);
       const message = {
@@ -71,33 +69,36 @@ async function checkYouTube() {
   }
 }
 
-// === 🎵 TikTok (modo reforzado con RSSHub) ===
+// === 🎵 TikTok (usando tiktok-signature) ===
 async function checkTikTok() {
   try {
-    // Usamos RSSHub para evitar bloqueos del feed original
-    const rssUrl = `https://rsshub.app/tiktok/user/${TIKTOK_USERNAME}`;
-    const response = await fetch(rssUrl);
-    const xml = await response.text();
+    // Generar URL firmada de TikTok
+    const profileUrl = `https://www.tiktok.com/@${TIKTOK_USERNAME}`;
+    const signed = sign(profileUrl);
+    const url = `${profileUrl}?${signed}`;
 
-    // Extraer el primer enlace de video desde el XML
-    const match = xml.match(
-      /<link>(https:\/\/www\.tiktok\.com\/@[^<]+\/video\/[^<]+)<\/link>/i
-    );
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      },
+    });
 
-    if (!match || !match[1]) {
-      console.log(`⚠️ No se pudo extraer enlace del RSSHub de TikTok (${TIKTOK_USERNAME}).`);
+    const html = await response.text();
+    const match = html.match(/https:\/\/www\.tiktok\.com\/@[^/]+\/video\/\d+/);
+
+    if (!match) {
+      console.log(`⚠️ No se encontró ningún video en TikTok (${TIKTOK_USERNAME}).`);
       return;
     }
 
-    const latestLink = match[1];
+    const latestLink = match[0];
     if (!lastTikTok || latestLink !== lastTikTok) {
       lastTikTok = latestLink;
       const channel = await client.channels.fetch(CHANNEL_DISCORD_AVISOS);
-
       const message = {
         content: `💫 ¡Nuevo ritual en movimiento!\n🌙 @everyone\n✨ ${TIKTOK_USERNAME} ya está brillando en TikTok\n🎭 Ven a invocar la risa: ${latestLink}`,
       };
-
       await channel.send(message);
       console.log(`🎵 Nuevo TikTok detectado → ${latestLink}`);
     } else {
@@ -107,7 +108,6 @@ async function checkTikTok() {
     console.error("❌ Error al revisar TikTok:", err.message);
   }
 }
-
 
 // === 🟣 Twitch ===
 async function checkTwitch() {
@@ -126,19 +126,17 @@ async function checkTwitch() {
     const stream = data.data[0];
     const channel = await client.channels.fetch(CHANNEL_DISCORD_STREAM);
 
-    // Cuando inicia el stream
+    // Inicia stream
     if (stream && !isLive) {
       isLive = true;
-
       const message = {
         content: `🌙 @everyone\nEl portal se ha abierto 💫\n**${TWITCH_USER}** está transmitiendo en Twitch 🕯️\n🎭 **${stream.title}**\n✨ Ven a cruzar el umbral → https://twitch.tv/${TWITCH_USER}`,
       };
-
       await channel.send(message);
       console.log(`🟣 Stream iniciado: ${stream.title}`);
     }
 
-    // Cuando finaliza
+    // Termina stream
     else if (!stream && isLive) {
       isLive = false;
       await channel.send(
@@ -160,15 +158,13 @@ async function checkTwitch() {
 client.once("ready", () => {
   console.log(`✅ Blood Moon Secretary conectada como ${client.user.tag}`);
 
-  // Revisiones iniciales
   checkYouTube();
   checkTikTok();
   checkTwitch();
 
-  // Intervalos automáticos
-  setInterval(checkYouTube, 5 * 60 * 1000); // cada 5 min
-  setInterval(checkTikTok, 10 * 60 * 1000); // cada 10 min
-  setInterval(checkTwitch, 2 * 60 * 1000); // cada 2 min
+  setInterval(checkYouTube, 5 * 60 * 1000); // 5 min
+  setInterval(checkTikTok, 10 * 60 * 1000); // 10 min
+  setInterval(checkTwitch, 2 * 60 * 1000); // 2 min
 });
 
 client.login(DISCORD_TOKEN);
