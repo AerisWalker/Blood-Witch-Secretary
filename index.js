@@ -3,7 +3,6 @@ import "./keepAlive.js";
 import { Client, GatewayIntentBits } from "discord.js";
 import Parser from "rss-parser";
 import fetch from "node-fetch";
-import TikTokSign from "tiktok-signature"; // ✅ Importación correcta
 import dotenv from "dotenv";
 import fs from "fs";
 dotenv.config();
@@ -150,6 +149,7 @@ client.once("clientReady", () => {
 });
 
 client.login(DISCORD_TOKEN);
+
 
 
 
