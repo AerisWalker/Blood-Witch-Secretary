@@ -62,6 +62,46 @@ async function checkYouTube() {
   }
 }
 
+// === 🎵 TikTok (scrape sin API ni premium, versión liviana) ===
+let lastTikTok = null;
+
+async function checkTikTok() {
+  try {
+    const url = `https://www.tiktok.com/@${TIKTOK_USERNAME}`;
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      },
+    });
+
+    const html = await response.text();
+
+    // busca la URL del último video
+    const match = html.match(/https:\/\/www\.tiktok\.com\/@[^/]+\/video\/\d+/);
+
+    if (!match) {
+      console.log(`⚠️ No se encontró ningún video en TikTok (${TIKTOK_USERNAME}).`);
+      return;
+    }
+
+    const latestLink = match[0];
+    if (!lastTikTok || latestLink !== lastTikTok) {
+      lastTikTok = latestLink;
+
+      const channel = await client.channels.fetch(CHANNEL_DISCORD_AVISOS);
+      await channel.send({
+        content: `💫 ¡Nuevo ritual en movimiento!\n🌙 @everyone\n✨ **${TIKTOK_USERNAME}** ya está brillando en TikTok\n🎭 Ven a invocar la risa: ${latestLink}`,
+      });
+
+      console.log(`🎵 Nuevo TikTok detectado → ${latestLink}`);
+    } else {
+      console.log(`📡 TikTok revisado — sin nuevos clips.`);
+    }
+  } catch (err) {
+    console.error("❌ Error al revisar TikTok:", err.message);
+  }
+}
 
 
 // === 🟣 Twitch ===
@@ -112,4 +152,5 @@ client.once("clientReady", () => {
 });
 
 client.login(DISCORD_TOKEN);
+
 
